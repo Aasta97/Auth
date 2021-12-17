@@ -14,33 +14,19 @@ function generateToken(params = {}) {
 }
 
 router.post("/authenticate", async (req, res) => {
-  const { email, password } = req.body;
+  const { username, password } = req.body;
 
-  const user = await User.findOne({ email }).select("+password");
+  const user = await User.findOne({ username }).select("+password");
 
-  if (!user) return res.status(400).send({ error: "User not found" });
+  if (!user) return res.status(400).send({ error: "Usuário não encontrado" });
 
   if (!(await bcrypt.compare(password, user.password)))
-    return res.status(400).send({ error: "Invalid password" });
+    return res.status(400).send({ error: "Senha inválida" });
   user.password = undefined;
 
   const token = generateToken({ id: user.id });
 
   res.send({ user, token });
-});
-
-router.post("/register", async (req, res) => {
-  try {
-    const { email } = req.body;
-    if (User.findOne(email))
-      return res.status(400).send({ error: "User already exists" });
-
-    const user = await User.create(req.body);
-
-    return res.send({ user });
-  } catch (err) {
-    return res.status(400).send({ error: "Registratio failed" });
-  }
 });
 
 module.exports = app => app.use("/auth", router);
